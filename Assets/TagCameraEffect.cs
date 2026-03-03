@@ -1,10 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-/// <summary>
-/// Attach to your Camera GameObject.
-/// Call TagCameraEffect.Instance.PlayTagEffect(newItPlayer.transform) from TagGameManager on every tag.
-/// </summary>
+
 public class TagCameraEffect : MonoBehaviour
 {
     public static TagCameraEffect Instance;

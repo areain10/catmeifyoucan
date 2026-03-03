@@ -61,10 +61,16 @@
     <Analyzer Include="C:\Program Files\Unity 2023.2.4f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Powerups\PowerupManager.cs" />
+    <Compile Include="Assets\Powerups\LuckyBlock.cs" />
+    <Compile Include="Assets\Powerups\HairballTrap.cs" />
     <Compile Include="Assets\TagGameManager.cs" />
+    <Compile Include="Assets\Powerups\PlayerPowerupHolder.cs" />
     <Compile Include="Assets\PlayerItIndicator.cs" />
+    <Compile Include="Assets\Powerups\PowerUpDefinition.cs" />
     <Compile Include="Assets\PlayerTagHitbox.cs" />
     <Compile Include="Assets\TagCameraEffect.cs" />
+    <Compile Include="Assets\hairballtrapobject.cs" />
     <Compile Include="Assets\PlayerController.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -537,16 +543,16 @@
       <HintPath>Library\PackageCache\com.unity.services.wire@1.2.2\Plugins\websocket-sharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.Collections.LowLevel.ILSupport">
+      <HintPath>Library\PackageCache\com.unity.collections@1.2.4\Unity.Collections.LowLevel.ILSupport\Unity.Collections.LowLevel.ILSupport.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="nunit.framework">
       <HintPath>Library\PackageCache\com.unity.ext.nunit@2.0.5\net40\unity-custom\nunit.framework.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>Library\PackageCache\com.unity.nuget.newtonsoft-json@3.2.1\Runtime\Newtonsoft.Json.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Unity.Collections.LowLevel.ILSupport">
-      <HintPath>Library\PackageCache\com.unity.collections@1.2.4\Unity.Collections.LowLevel.ILSupport\Unity.Collections.LowLevel.ILSupport.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="netstandard">
@@ -1169,12 +1175,12 @@
       <HintPath>Library\ScriptAssemblies\Unity.TextMeshPro.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Unity.Services.Core">
-      <HintPath>Library\ScriptAssemblies\Unity.Services.Core.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Unity.Burst.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.Burst.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.Services.Core">
+      <HintPath>Library\ScriptAssemblies\Unity.Services.Core.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.2D.PixelPerfect">
