@@ -66,12 +66,16 @@
     <Compile Include="Assets\Powerups\HairballTrap.cs" />
     <Compile Include="Assets\TagGameManager.cs" />
     <Compile Include="Assets\Powerups\PlayerPowerupHolder.cs" />
+    <Compile Include="Assets\Powerups\RocketDash.cs" />
     <Compile Include="Assets\PlayerItIndicator.cs" />
     <Compile Include="Assets\Powerups\PowerUpDefinition.cs" />
+    <Compile Include="Assets\Powerups\Ghost.cs" />
     <Compile Include="Assets\PlayerTagHitbox.cs" />
     <Compile Include="Assets\TagCameraEffect.cs" />
-    <Compile Include="Assets\hairballtrapobject.cs" />
     <Compile Include="Assets\PlayerController.cs" />
+    <Compile Include="Assets\Powerups\hairballtrapobject.cs" />
+    <Compile Include="Assets\TagCameraFollow.cs" />
+    <Compile Include="Assets\SoundManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

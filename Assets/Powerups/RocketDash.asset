@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4907fa4e16964f14fab7e0d9e3a2ba36, type: 3}
+  m_Name: RocketDash
+  m_EditorClassIdentifier: 
+  icon: {fileID: 21300000, guid: ab39d50c465fcac4ba8e599cbd975bf8, type: 3}
+  launchSpeed: 28
+  launchDuration: 0.22
+  bleedOffDuration: 0.15
+  bleedOffMultiplier: 0.5

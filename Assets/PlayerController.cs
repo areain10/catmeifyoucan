@@ -28,26 +28,27 @@ public class PlayerController : MonoBehaviour
     public bool faceMoveDirection = true;
 
     [Header("Animation")]
-    public Animator animator; // optional assign; will auto-find on this GO
-    [Tooltip("Animator parameter names")]
-    public string paramMoveX = "MoveX";      // float (-1,0,1)
-    public string paramMoveY = "MoveY";      // float (-1,0,1)
-    public string paramSpeed = "Speed";      // float (0..1)
-    public string paramIsMoving = "IsMoving";// bool
-    public string paramDash = "Dash";        // trigger
+    public Animator animator;
+    public string paramMoveX = "MoveX";
+    public string paramMoveY = "MoveY";
+    public string paramSpeed = "Speed";
+    public string paramIsMoving = "IsMoving";
+    public string paramDash = "Dash";
+
+    // Set to true to freeze the player in place (used during countdown)
+    [HideInInspector] public bool inputLocked = false;
 
     Rigidbody rb;
     string axisH, axisV;
 
     Vector2 rawInput;
-    Vector2 input;         // snapped (4-way)
+    Vector2 input;
     Vector3 desiredVel;
 
     float dashTimer;
     float dashCooldownTimer;
     Vector3 dashDir;
 
-    // last non-zero facing for idle direction
     Vector2 lastMoveDir = Vector2.down;
 
     void Awake()
@@ -66,17 +67,21 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // 1) Read raw input
-        rawInput = new Vector2(Input.GetAxisRaw(axisH), Input.GetAxisRaw(axisV));
+        // Locked during countdown — clear input so animations go idle
+        if (inputLocked)
+        {
+            input = Vector2.zero;
+            rawInput = Vector2.zero;
+            UpdateAnimator();
+            return;
+        }
 
-        // 2) Convert to 4-way if requested (no diagonals)
+        rawInput = new Vector2(Input.GetAxisRaw(axisH), Input.GetAxisRaw(axisV));
         input = fourWayOnly ? SnapTo4Way(rawInput) : rawInput;
 
-        // Track last facing direction (for idle)
         if (input.sqrMagnitude > 0.001f)
             lastMoveDir = input;
 
-        // Dash input
         if (enableDash)
         {
             dashCooldownTimer -= Time.deltaTime;
@@ -88,7 +93,6 @@ public class PlayerController : MonoBehaviour
 
                 if (dir.sqrMagnitude < 0.001f)
                 {
-                    // If no input, dash in last move direction (or velocity fallback)
                     Vector3 last = new Vector3(lastMoveDir.x, 0f, lastMoveDir.y);
                     dir = last.sqrMagnitude > 0.001f ? last : (rb.velocity.sqrMagnitude > 0.01f ? rb.velocity.normalized : Vector3.forward);
                 }
@@ -97,13 +101,11 @@ public class PlayerController : MonoBehaviour
                 dashTimer = dashDuration;
                 dashCooldownTimer = dashCooldown;
 
-                // Animation trigger
                 if (animator != null && !string.IsNullOrEmpty(paramDash))
                     animator.SetTrigger(paramDash);
             }
         }
 
-        // Rotate visuals (optional)
         if (faceMoveDirection && visualRoot != null)
         {
             Vector3 look = new Vector3(lastMoveDir.x, 0f, lastMoveDir.y);
@@ -111,13 +113,19 @@ public class PlayerController : MonoBehaviour
                 visualRoot.forward = look.normalized;
         }
 
-        // 3) Push animation params
         UpdateAnimator();
     }
 
     void FixedUpdate()
     {
-        // Dash movement
+        // Hard stop while locked
+        if (inputLocked)
+        {
+            rb.velocity = Vector3.zero;
+            dashTimer = 0f;
+            return;
+        }
+
         if (enableDash && dashTimer > 0f)
         {
             dashTimer -= Time.fixedDeltaTime;
@@ -125,7 +133,6 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Regular movement
         desiredVel = new Vector3(input.x, 0f, input.y) * moveSpeed;
 
         Vector3 vel = rb.velocity;
@@ -138,15 +145,10 @@ public class PlayerController : MonoBehaviour
         rb.velocity = new Vector3(vel.x + change.x, 0f, vel.z + change.z);
     }
 
-    // --- Helpers ---
-
-    // Snaps input to cardinal directions only, no diagonals.
-    // If both axes pressed, whichever magnitude is larger wins.
     Vector2 SnapTo4Way(Vector2 v)
     {
         if (v.sqrMagnitude < 0.001f) return Vector2.zero;
 
-        // Choose dominant axis (no diagonal)
         if (Mathf.Abs(v.x) >= Mathf.Abs(v.y))
             return new Vector2(Mathf.Sign(v.x), 0f);
         else
@@ -158,17 +160,12 @@ public class PlayerController : MonoBehaviour
         if (animator == null) return;
 
         bool moving = input.sqrMagnitude > 0.001f;
-
-        // For direction, use lastMoveDir so idle keeps facing
         Vector2 dir = moving ? input : lastMoveDir;
 
-        // These will be exactly -1, 0, or 1 in 4-way mode
         animator.SetFloat(paramMoveX, dir.x);
         animator.SetFloat(paramMoveY, dir.y);
-
         animator.SetBool(paramIsMoving, moving);
 
-        // Speed normalized 0..1 (nice for blend trees)
         float speed01 = Mathf.Clamp01(rb.velocity.magnitude / Mathf.Max(0.001f, moveSpeed));
         animator.SetFloat(paramSpeed, speed01);
     }

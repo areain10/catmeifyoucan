@@ -55,7 +55,7 @@ public class HairballTrapObject : MonoBehaviour
         float originalSpeed = pc.moveSpeed;
         float originalAccel = pc.acceleration;
         bool originalDash = pc.enableDash;
-
+        SoundManager.Play("Hurt");
         pc.moveSpeed = originalSpeed * def.tripSpeedMultiplier;
         pc.acceleration = 0f;
         pc.enableDash = false;

@@ -26,9 +26,14 @@ public class PlayerPowerupHolder : MonoBehaviour
         if (Input.GetKeyDown(useKey))
             UsePowerup();
     }
-
+    private void Start()
+    {
+        if (powerupIconRoot != null)
+            powerupIconRoot.SetActive(currentPowerup != null);
+    }
     public void GivePowerup(IPowerup powerup)
     {
+        SoundManager.Play("PickUp");
         currentPowerup = powerup;
         RefreshIcon();
     }
@@ -39,6 +44,7 @@ public class PlayerPowerupHolder : MonoBehaviour
     {
         currentPowerup.Activate(gameObject);
         currentPowerup = null;
+        SoundManager.Play("Place");
         RefreshIcon();
     }
 

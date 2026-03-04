@@ -12,23 +12,28 @@ public class TagGameManager : MonoBehaviour
     public int roundsToWin = 3;
 
     [Header("Tiny Upgrades")]
-    public float tagGraceSeconds = 0.75f;   // no re-tag window after IT swap
-    public int countdownSeconds = 3;        // 3..2..1..GO
+    public float tagGraceSeconds = 0.75f;
+    public int countdownSeconds = 3;
     public float betweenRoundsPause = 1.25f;
 
+    [Header("Spawn Points")]
+    [Tooltip("Where P1 teleports at the start of each round.")]
+    public Transform p1SpawnPoint;
+    [Tooltip("Where P2 teleports at the start of each round.")]
+    public Transform p2SpawnPoint;
+
     [Header("Tag Separation")]
-    public float knockbackForce = 10f;      // impulse applied to both players on tag
-    public float speedBoostMultiplier = 1.5f;   // speed boost for newly tagged player
-    public float speedBoostDuration = 0.5f;     // how long the speed boost lasts
+    public float knockbackForce = 10f;
+    public float speedBoostMultiplier = 1.5f;
+    public float speedBoostDuration = 0.5f;
 
     [Header("Tag Camera Effect")]
-    [Tooltip("How long the timer stays paused during the tag camera effect (should match zoomDuration + freezeDuration in TagCameraEffect)")]
     public float timerFreezeDuration = 1.5f;
 
     [Header("Optional UI")]
-    public TextMeshProUGUI hudText;        // shows timers/rounds/IT
-    public TextMeshProUGUI centerText;     // countdown + GO + round winner
-    public Slider p1TimerSlider;           // slider max should be set to roundTime
+    public TextMeshProUGUI hudText;
+    public TextMeshProUGUI centerText;
+    public Slider p1TimerSlider;
     public Slider p2TimerSlider;
 
     GameObject p1;
@@ -46,11 +51,9 @@ public class TagGameManager : MonoBehaviour
     bool matchOver;
     bool timerFrozen;
 
-    // IT selection: first round random, then alternate
     bool firstRound = true;
     GameObject lastIt;
 
-    // tag grace
     float nextTagAllowedTime;
 
     void Awake()
@@ -70,7 +73,6 @@ public class TagGameManager : MonoBehaviour
     {
         if (!roundActive || matchOver) return;
 
-
         if (itPlayer == p1 && !timerFrozen) p1Timer -= Time.deltaTime;
         else if (itPlayer == p2 && !timerFrozen) p2Timer -= Time.deltaTime;
 
@@ -80,17 +82,22 @@ public class TagGameManager : MonoBehaviour
         else if (p2Timer <= 0f) EndRound(winner: p2);
     }
 
-
     IEnumerator RoundFlow(bool starting)
     {
-
         p1Timer = roundTime;
         p2Timer = roundTime;
 
         if (p1TimerSlider != null) { p1TimerSlider.maxValue = roundTime; p1TimerSlider.value = roundTime; }
         if (p2TimerSlider != null) { p2TimerSlider.maxValue = roundTime; p2TimerSlider.value = roundTime; }
 
+        // --- Teleport players to spawn points ---
+        TeleportToSpawn(p1, p1SpawnPoint);
+        TeleportToSpawn(p2, p2SpawnPoint);
 
+        // --- Lock players in place ---
+        SetPlayersLocked(true);
+
+        // --- Pick IT ---
         if (firstRound)
         {
             itPlayer = Random.value > 0.5f ? p1 : p2;
@@ -98,28 +105,29 @@ public class TagGameManager : MonoBehaviour
         }
         else
         {
-
             itPlayer = (lastIt == p1) ? p2 : p1;
         }
         lastIt = itPlayer;
 
-
         ApplyItVisuals();
-
 
         roundActive = false;
         nextTagAllowedTime = Time.time + 999f;
 
-
+        // --- Countdown ---
+        SoundManager.Play("Countdown");
         for (int i = countdownSeconds; i > 0; i--)
         {
             SetCenterText(i.ToString());
-            yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(0.8f);
         }
         SetCenterText("GO!");
+        SoundManager.Play("OST");
         yield return new WaitForSeconds(0.35f);
         SetCenterText("");
 
+        // --- Unlock players ---
+        SetPlayersLocked(false);
 
         roundActive = true;
         nextTagAllowedTime = Time.time;
@@ -127,11 +135,57 @@ public class TagGameManager : MonoBehaviour
         UpdateHUD();
     }
 
+    // ---------------------------------------------------------------
+    // Teleports a player to a spawn point, zeroing their velocity.
+    // Safe to call even if spawnPoint is null (does nothing).
+    // ---------------------------------------------------------------
+    void TeleportToSpawn(GameObject player, Transform spawnPoint)
+    {
+        if (player == null || spawnPoint == null) return;
+
+        // Move the rigidbody via MovePosition so interpolation doesn't
+        // cause a one-frame ghost trail
+        Rigidbody rb = player.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.MovePosition(spawnPoint.position);
+        }
+        else
+        {
+            player.transform.position = spawnPoint.position;
+        }
+
+        // Face the player toward the centre of the arena (toward each other)
+        // by using the direction from spawn to the opposite spawn, flat on XZ.
+        player.transform.rotation = spawnPoint.rotation;
+    }
+
+    // ---------------------------------------------------------------
+    // Locks / unlocks both players' input and physics.
+    // ---------------------------------------------------------------
+    void SetPlayersLocked(bool locked)
+    {
+        SetLocked(p1, locked);
+        SetLocked(p2, locked);
+    }
+
+    void SetLocked(GameObject player, bool locked)
+    {
+        if (player == null) return;
+        PlayerController pc = player.GetComponent<PlayerController>();
+        if (pc != null) pc.inputLocked = locked;
+    }
+
     void EndRound(GameObject winner)
     {
         if (!roundActive || matchOver) return;
 
         roundActive = false;
+
+        // Make sure players can't move between rounds
+        SetPlayersLocked(true);
 
         if (winner == p1) p1Rounds++;
         else if (winner == p2) p2Rounds++;
@@ -150,7 +204,6 @@ public class TagGameManager : MonoBehaviour
 
     IEnumerator NextRoundAfterPause()
     {
-
         nextTagAllowedTime = Time.time + 999f;
 
         yield return new WaitForSeconds(betweenRoundsPause);
@@ -161,11 +214,11 @@ public class TagGameManager : MonoBehaviour
     void EndMatch(GameObject winner)
     {
         matchOver = true;
+        SetPlayersLocked(true);
         SetCenterText($"{winner.name} wins the MATCH!");
         Debug.Log($"MATCH WINNER: {winner.name}");
         Time.timeScale = 0f;
     }
-
 
     public bool IsIt(GameObject player) => player == itPlayer;
 
@@ -184,21 +237,18 @@ public class TagGameManager : MonoBehaviour
         itPlayer = newIt;
         lastIt = itPlayer;
 
-        // --- Camera effect: freeze, zoom, shake ---
         if (TagCameraEffect.Instance != null)
-            TagCameraEffect.Instance.PlayTagEffect(itPlayer.transform,this.GetComponent<TagGameManager>());
+            TagCameraEffect.Instance.PlayTagEffect(itPlayer.transform, this.GetComponent<TagGameManager>());
         SetCenterText("TAG!");
+        SoundManager.Play("Click");
         StartCoroutine(FreezeTimerCoroutine());
 
-        // --- Knockback: push both players away from each other ---
         ApplyTagKnockback(oldIt, newIt);
 
-        // --- Speed boost for the newly tagged player ---
         PlayerController newItController = newIt.GetComponent<PlayerController>();
         if (newItController != null)
             StartCoroutine(SpeedBoostCoroutine(newItController));
 
-        // grace period + phase-through handled in PlayerTagHitbox via nextTagAllowedTime
         nextTagAllowedTime = Time.time + tagGraceSeconds;
 
         ApplyItVisuals();
@@ -217,7 +267,6 @@ public class TagGameManager : MonoBehaviour
     {
         Vector3 awayDir = (tagged.transform.position - tagger.transform.position);
 
-        // If they're somehow exactly overlapping, pick a random horizontal direction
         if (awayDir.sqrMagnitude < 0.001f)
             awayDir = new Vector3(Random.Range(-1f, 1f), 0f, Random.Range(-1f, 1f));
 
@@ -230,7 +279,7 @@ public class TagGameManager : MonoBehaviour
             taggedRb.AddForce(awayDir * knockbackForce, ForceMode.Impulse);
 
         if (taggerRb != null)
-            taggerRb.AddForce(-awayDir * knockbackForce * 0.5f, ForceMode.Impulse); // tagger gets a lighter pushback
+            taggerRb.AddForce(-awayDir * knockbackForce * 0.5f, ForceMode.Impulse);
     }
 
     IEnumerator SpeedBoostCoroutine(PlayerController pc)
@@ -261,7 +310,6 @@ public class TagGameManager : MonoBehaviour
 
     void ApplyItVisuals()
     {
-
         if (p1 != null)
         {
             var ind = p1.GetComponentInChildren<PlayerItIndicator>();

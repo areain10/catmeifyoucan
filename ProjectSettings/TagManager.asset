@@ -6,6 +6,8 @@ TagManager:
   tags:
   - P1
   - P2
+  - Boundary
+  - Obstacle
   layers:
   - Default
   - TransparentFX

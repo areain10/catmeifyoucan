@@ -1,7 +1,6 @@
 using System.Collections;
 using UnityEngine;
 
-
 public class TagCameraEffect : MonoBehaviour
 {
     public static TagCameraEffect Instance;
@@ -29,12 +28,14 @@ public class TagCameraEffect : MonoBehaviour
     Vector3 defaultLocalPos;
     float defaultFOV;
 
-
     Transform zoomTarget;
     Vector3 priorCamPos;
     float priorFOV;
 
     Coroutine activeEffect;
+
+    // Reference to the follow cam on the same GameObject (optional)
+    TagCameraFollow followCam;
 
     void Awake()
     {
@@ -43,34 +44,39 @@ public class TagCameraEffect : MonoBehaviour
         if (cam == null) cam = Camera.main;
         defaultLocalPos = transform.localPosition;
         defaultFOV = cam.fieldOfView;
+
+        followCam = GetComponent<TagCameraFollow>();
     }
 
     /// <summary>Call this when a tag happens.</summary>
-    public void PlayTagEffect(Transform newItTransform,TagGameManager owner)
+    public void PlayTagEffect(Transform newItTransform, TagGameManager owner)
     {
         if (activeEffect != null)
             StopCoroutine(activeEffect);
-        
-        activeEffect = StartCoroutine(TagEffectRoutine(newItTransform,owner));
+
+        activeEffect = StartCoroutine(TagEffectRoutine(newItTransform, owner));
     }
 
     IEnumerator TagEffectRoutine(Transform target, TagGameManager owner)
     {
+        // Pause the follow cam so we can do our cinematic freely
+        if (followCam != null) followCam.SetEffectActive(true);
+
         owner.SetCenterText("TAG!");
         Time.timeScale = 0f;
         yield return new WaitForSecondsRealtime(freezeDuration);
         Time.timeScale = 1f;
-        
 
         Coroutine shake = StartCoroutine(ShakeRoutine());
         yield return StartCoroutine(ZoomRoutine(target));
         owner.SetCenterText("");
-        // Make sure shake is done before we exit
         yield return shake;
 
         activeEffect = null;
-    }
 
+        // Resume the follow cam
+        if (followCam != null) followCam.SetEffectActive(false);
+    }
 
     IEnumerator ZoomRoutine(Transform target)
     {
@@ -79,13 +85,12 @@ public class TagCameraEffect : MonoBehaviour
         Vector3 startPos = transform.position;
         float startFOV = cam.fieldOfView;
 
-       
         Vector3 dirToTarget = (target.position - transform.position).normalized;
         Vector3 zoomedPos = transform.position + dirToTarget * zoomDistance;
-        float zoomedFOV = startFOV - 15f; 
+        float zoomedFOV = startFOV - 15f;
 
         float elapsed = 0f;
-        float halfTime = zoomDuration * 0.4f; 
+        float halfTime = zoomDuration * 0.4f;
 
         // Zoom IN
         while (elapsed < halfTime)
@@ -97,15 +102,14 @@ public class TagCameraEffect : MonoBehaviour
             yield return null;
         }
 
-    
         yield return new WaitForSeconds(0.1f);
 
-   
         elapsed = 0f;
         float outTime = zoomDuration * 0.6f;
         Vector3 midPos = transform.position;
         float midFOV = cam.fieldOfView;
 
+        // Zoom OUT back to where follow cam left off
         while (elapsed < outTime)
         {
             elapsed += Time.deltaTime;
@@ -128,7 +132,7 @@ public class TagCameraEffect : MonoBehaviour
         while (elapsed < shakeDuration)
         {
             elapsed += Time.deltaTime;
-            float strength = Mathf.Lerp(shakeMagnitude, 0f, elapsed / shakeDuration); 
+            float strength = Mathf.Lerp(shakeMagnitude, 0f, elapsed / shakeDuration);
 
             transform.localPosition = originPos + new Vector3(
                 Random.Range(-1f, 1f) * strength,
