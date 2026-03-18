@@ -37,7 +37,7 @@ public class TagGameManager : MonoBehaviour
     public Slider p2TimerSlider;
 
     [Header("Game Start")]
-    public bool gameStarted = false; // waits for MenuManager to start the game
+    public bool gameStarted = false; 
 
     GameObject p1;
     GameObject p2;
@@ -57,6 +57,7 @@ public class TagGameManager : MonoBehaviour
 
     bool firstRound = true;
     GameObject lastIt;
+    public GameObject playAgain;
 
     float nextTagAllowedTime;
 
@@ -223,6 +224,7 @@ public class TagGameManager : MonoBehaviour
         SetCenterText($"{winner.name} wins the MATCH!");
         Debug.Log($"MATCH WINNER: {winner.name}");
         Time.timeScale = 0f;
+        playAgain.SetActive(true);
     }
 
     public bool IsIt(GameObject player) => player == itPlayer;

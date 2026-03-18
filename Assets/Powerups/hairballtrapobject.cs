@@ -12,7 +12,7 @@ public class HairballTrapObject : MonoBehaviour
 
     bool triggered = false;
 
-    public Animator animator;
+    public Animator[] animators;
 
     public void Init(HairballTrapDefinition definition, GameObject ownerPlayer)
     {
@@ -43,8 +43,11 @@ public class HairballTrapObject : MonoBehaviour
         Rigidbody rb = victim.GetComponent<Rigidbody>();
         if (rb == null) rb = victim.GetComponentInParent<Rigidbody>();
 
-        if (animator == null) animator = victim.GetComponentInChildren<Animator>();
-
+        if (animators == null || animators.Length == 0)
+        {
+            animators = victim.GetComponentsInChildren<Animator>();
+        }
+            
         if (rb != null)
         {
             rb.velocity = Vector3.zero;
@@ -54,16 +57,22 @@ public class HairballTrapObject : MonoBehaviour
         pc.stuck = true;
 
         SoundManager.Play("Meow");
-        if (animator != null)
+        if (animators != null)
         {
-            animator.SetBool("Yarn", true);
+            foreach (Animator anim in animators)
+            {
+                anim.SetBool("Yarn", true);
+            }
         }
 
         yield return new WaitForSeconds(2f);
 
-        if (animator != null)
+        if (animators != null)
         {
-            animator.SetBool("Yarn", false);
+            foreach (Animator anim in animators)
+            {
+                anim.SetBool("Yarn", false);
+            }
         }
 
         if (rb != null)
