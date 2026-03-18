@@ -28,15 +28,17 @@ public class PlayerController : MonoBehaviour
     public bool faceMoveDirection = true;
 
     [Header("Animation")]
-    public Animator animator;
-    public string paramMoveX = "MoveX";
-    public string paramMoveY = "MoveY";
-    public string paramSpeed = "Speed";
+    public Animator[] animators;
+    public string paramMoveX;
+    public string paramMoveY;
+    //public string paramSpeed = "Speed";
     public string paramIsMoving = "IsMoving";
-    public string paramDash = "Dash";
+    //public string paramDash = "Dash";
 
     // Set to true to freeze the player in place (used during countdown)
     [HideInInspector] public bool inputLocked = false;
+
+    public bool stuck = false;
 
     Rigidbody rb;
     string axisH, axisV;
@@ -62,11 +64,12 @@ public class PlayerController : MonoBehaviour
         rb.freezeRotation = true;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
 
-        if (animator == null) animator = GetComponent<Animator>();
+        animators = GetComponentsInChildren<Animator>();
     }
 
     void Update()
     {
+        if (stuck) return;
         // Locked during countdown — clear input so animations go idle
         if (inputLocked)
         {
@@ -101,8 +104,8 @@ public class PlayerController : MonoBehaviour
                 dashTimer = dashDuration;
                 dashCooldownTimer = dashCooldown;
 
-                if (animator != null && !string.IsNullOrEmpty(paramDash))
-                    animator.SetTrigger(paramDash);
+                //if (animator != null && !string.IsNullOrEmpty(paramDash))
+                    //animator.SetTrigger(paramDash);
             }
         }
 
@@ -113,7 +116,24 @@ public class PlayerController : MonoBehaviour
                 visualRoot.forward = look.normalized;
         }
 
-        UpdateAnimator();
+        if(input != Vector2.zero)
+        {
+            UpdateAnimator();
+        }
+
+        bool moving = input.sqrMagnitude > 0.001f;
+        
+        foreach (Animator anim in animators)
+        {
+            if (moving)
+            {
+                anim.SetBool(paramIsMoving, true);
+            }
+            else
+            {
+                anim.SetBool(paramIsMoving, false);
+            }
+        }
     }
 
     void FixedUpdate()
@@ -157,16 +177,15 @@ public class PlayerController : MonoBehaviour
 
     void UpdateAnimator()
     {
-        if (animator == null) return;
+        foreach (Animator anim in animators)
+        {
+            if (anim == null) return;
 
-        bool moving = input.sqrMagnitude > 0.001f;
-        Vector2 dir = moving ? input : lastMoveDir;
+            anim.SetFloat(paramMoveX, input.x);
+            anim.SetFloat(paramMoveY, input.y);
+        }
 
-        animator.SetFloat(paramMoveX, dir.x);
-        animator.SetFloat(paramMoveY, dir.y);
-        animator.SetBool(paramIsMoving, moving);
-
-        float speed01 = Mathf.Clamp01(rb.velocity.magnitude / Mathf.Max(0.001f, moveSpeed));
-        animator.SetFloat(paramSpeed, speed01);
-    }
+            //float speed01 = Mathf.Clamp01(rb.velocity.magnitude / Mathf.Max(0.001f, moveSpeed));
+            //animator.SetFloat(paramSpeed, speed01);
+        }
 }

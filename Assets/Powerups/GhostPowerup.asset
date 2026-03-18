@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed564442b2397904a8357ef53646280d, type: 3}
   m_Name: GhostPowerup
   m_EditorClassIdentifier: 
-  icon: {fileID: 21300000, guid: 42c3027b03329b84c96568eb09ac8d79, type: 3}
+  icon: {fileID: 449432929, guid: 04d091e6e5a2e12469e7da6b3a3bcb89, type: 3}
   duration: 3
   speedMultiplier: 1.25
   obstacleTag: Obstacle

@@ -9,9 +9,7 @@ public class HairballTrapDefinition : PowerupDefinition
     public GameObject hairballPrefab;   // the world object dropped
 
     [Header("Trip Settings")]
-    public float tripDuration = 1.1f;       // how long the victim is stunned
-    public float tripSpeedMultiplier = 0f;  // 0 = full stop during spin
-    public float spinSpeed = 720f;          // degrees/sec during trip
+    public float tripDuration = .2f;       // how long the victim is stunned
 
     public override IPowerup CreateInstance()
     {

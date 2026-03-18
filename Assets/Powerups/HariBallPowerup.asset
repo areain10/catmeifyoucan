@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 540d5eebb15bc9041922d8f93bc4407d, type: 3}
   m_Name: HariBallPowerup
   m_EditorClassIdentifier: 
-  icon: {fileID: 21300000, guid: 2420172433cc93d49b28f85a3cc68e75, type: 3}
+  icon: {fileID: 1893920731, guid: 04d091e6e5a2e12469e7da6b3a3bcb89, type: 3}
   hairballPrefab: {fileID: 3766821973499797091, guid: 187c42ef78302d342b8a007c0befc8f5, type: 3}
   tripDuration: 2
   tripSpeedMultiplier: 0.01

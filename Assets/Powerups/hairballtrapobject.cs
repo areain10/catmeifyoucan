@@ -6,14 +6,13 @@ public class HairballTrapObject : MonoBehaviour
     HairballTrapDefinition def;
     GameObject owner;
 
-    [Header("Visuals")]
-    public ParticleSystem tripParticles;
-    public AudioSource tripSound;
 
     [Header("Lifetime")]
     public float maxLifetime = 20f;
 
     bool triggered = false;
+
+    public Animator animator;
 
     public void Init(HairballTrapDefinition definition, GameObject ownerPlayer)
     {
@@ -35,59 +34,43 @@ public class HairballTrapObject : MonoBehaviour
         Debug.Log("ISTRIPPED");
         triggered = true;
         pc.StartCoroutine(TripCoroutine(pc, other.gameObject));
-
-        if (tripParticles != null)
-        {
-            tripParticles.transform.parent = null;
-            tripParticles.Play();
-        }
-        if (tripSound != null)
-        {
-            tripSound.transform.parent = null;
-            tripSound.Play();
-        }
-
+        
         Destroy(gameObject);
     }
 
     IEnumerator TripCoroutine(PlayerController pc, GameObject victim)
     {
-        float originalSpeed = pc.moveSpeed;
-        float originalAccel = pc.acceleration;
-        bool originalDash = pc.enableDash;
-        SoundManager.Play("Hurt");
-        pc.moveSpeed = originalSpeed * def.tripSpeedMultiplier;
-        pc.acceleration = 0f;
-        pc.enableDash = false;
-
         Rigidbody rb = victim.GetComponent<Rigidbody>();
-        bool victimIsIt = TagGameManager.Instance != null && TagGameManager.Instance.IsIt(victim);
-        if (victimIsIt && rb != null)
+        if (rb == null) rb = victim.GetComponentInParent<Rigidbody>();
+
+        if (animator == null) animator = victim.GetComponentInChildren<Animator>();
+
+        if (rb != null)
         {
-            Vector3 skidDir = Vector3.Cross(victim.transform.forward, Vector3.up).normalized;
-            if (Random.value > 0.5f) skidDir = -skidDir;
-            rb.AddForce(skidDir * 5f, ForceMode.Impulse);
+            rb.velocity = Vector3.zero;
+            rb.isKinematic = true; 
         }
 
-        // Cache original rotation before spinning
-        Transform visual = pc.visualRoot != null ? pc.visualRoot : pc.transform;
-        Quaternion originalRotation = visual.rotation;
+        pc.stuck = true;
 
-        float elapsed = 0f;
-        while (elapsed < def.tripDuration)
+        SoundManager.Play("Meow");
+        if (animator != null)
         {
-            elapsed += Time.deltaTime;
-            visual.Rotate(Vector3.up, def.spinSpeed * Time.deltaTime);
-            yield return null;
+            animator.SetBool("Yarn", true);
         }
 
-        // Restore original rotation exactly
-        visual.rotation = originalRotation;
+        yield return new WaitForSeconds(2f);
 
-        pc.moveSpeed = originalSpeed;
-        pc.acceleration = originalAccel;
-        pc.enableDash = originalDash;
+        if (animator != null)
+        {
+            animator.SetBool("Yarn", false);
+        }
 
-        Debug.Log($"{victim.name} recovered from hairball trip.");
+        if (rb != null)
+        {
+            rb.isKinematic = false;
+        }
+            
+        pc.stuck = false;
     }
 }

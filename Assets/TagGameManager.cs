@@ -14,7 +14,7 @@ public class TagGameManager : MonoBehaviour
     [Header("Tiny Upgrades")]
     public float tagGraceSeconds = 0.75f;
     public int countdownSeconds = 3;
-    public float betweenRoundsPause = 1.25f;
+    public float betweenRoundsPause = 2f;
 
     [Header("Spawn Points")]
     [Tooltip("Where P1 teleports at the start of each round.")]
@@ -36,6 +36,9 @@ public class TagGameManager : MonoBehaviour
     public Slider p1TimerSlider;
     public Slider p2TimerSlider;
 
+    [Header("Game Start")]
+    public bool gameStarted = false; // waits for MenuManager to start the game
+
     GameObject p1;
     GameObject p2;
 
@@ -48,7 +51,8 @@ public class TagGameManager : MonoBehaviour
     GameObject itPlayer;
 
     bool roundActive;
-    bool matchOver;
+    public bool matchOver;
+    public GameObject Winner { get; private set; }
     bool timerFrozen;
 
     bool firstRound = true;
@@ -66,11 +70,13 @@ public class TagGameManager : MonoBehaviour
         p1 = GameObject.FindGameObjectWithTag("P1");
         p2 = GameObject.FindGameObjectWithTag("P2");
 
-        StartCoroutine(RoundFlow(starting: true));
+        // Do NOT start the first round automatically
+        // Wait until MenuManager calls BeginGame()
     }
 
     void Update()
     {
+        if (!gameStarted) return; // wait for Start button
         if (!roundActive || matchOver) return;
 
         if (itPlayer == p1 && !timerFrozen) p1Timer -= Time.deltaTime;
@@ -80,6 +86,15 @@ public class TagGameManager : MonoBehaviour
 
         if (p1Timer <= 0f) EndRound(winner: p1);
         else if (p2Timer <= 0f) EndRound(winner: p2);
+    }
+
+    public void BeginGame()
+    {
+        if (!gameStarted)
+        {
+            gameStarted = true;
+            StartCoroutine(RoundFlow(starting: true));
+        }
     }
 
     IEnumerator RoundFlow(bool starting)
@@ -135,16 +150,10 @@ public class TagGameManager : MonoBehaviour
         UpdateHUD();
     }
 
-    // ---------------------------------------------------------------
-    // Teleports a player to a spawn point, zeroing their velocity.
-    // Safe to call even if spawnPoint is null (does nothing).
-    // ---------------------------------------------------------------
     void TeleportToSpawn(GameObject player, Transform spawnPoint)
     {
         if (player == null || spawnPoint == null) return;
 
-        // Move the rigidbody via MovePosition so interpolation doesn't
-        // cause a one-frame ghost trail
         Rigidbody rb = player.GetComponent<Rigidbody>();
         if (rb != null)
         {
@@ -157,14 +166,9 @@ public class TagGameManager : MonoBehaviour
             player.transform.position = spawnPoint.position;
         }
 
-        // Face the player toward the centre of the arena (toward each other)
-        // by using the direction from spawn to the opposite spawn, flat on XZ.
         player.transform.rotation = spawnPoint.rotation;
     }
 
-    // ---------------------------------------------------------------
-    // Locks / unlocks both players' input and physics.
-    // ---------------------------------------------------------------
     void SetPlayersLocked(bool locked)
     {
         SetLocked(p1, locked);
@@ -184,7 +188,6 @@ public class TagGameManager : MonoBehaviour
 
         roundActive = false;
 
-        // Make sure players can't move between rounds
         SetPlayersLocked(true);
 
         if (winner == p1) p1Rounds++;
@@ -214,6 +217,8 @@ public class TagGameManager : MonoBehaviour
     void EndMatch(GameObject winner)
     {
         matchOver = true;
+        Winner = winner;
+
         SetPlayersLocked(true);
         SetCenterText($"{winner.name} wins the MATCH!");
         Debug.Log($"MATCH WINNER: {winner.name}");
